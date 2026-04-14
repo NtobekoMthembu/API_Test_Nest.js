@@ -2,15 +2,17 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { DatabaseModule } from './database/database.module';
+// import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MyLoggerModule } from './my-logger/my-logger.module';
+import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
     UsersModule,
-    DatabaseModule,
+    // removed database module
+    FirebaseModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -24,6 +26,7 @@ import { MyLoggerModule } from './my-logger/my-logger.module';
       },
     ]),
     MyLoggerModule,
+    FirebaseModule,
   ],
   controllers: [AppController],
   providers: [

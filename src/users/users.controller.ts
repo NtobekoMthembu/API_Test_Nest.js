@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 import {
   Body,
   Controller,
@@ -9,52 +7,40 @@ import {
   Patch,
   Post,
   Query,
-  ParseIntPipe,
   ValidationPipe,
-  Ip,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { Prisma } from '../../generated/prisma/client';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
-import { MyLoggerService } from 'src/my-logger/my-logger.service';
+import type { User, Role } from './interfaces/user.interface';
 
-@SkipThrottle()
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
-  private readonly logger = new MyLoggerService(UsersController.name);
 
-  @SkipThrottle({ default: false })
   @Get()
-  findUsers(
-    @Ip() ip: string,
-    @Query('role') role?: 'ADMIN' | 'INTERN' | 'DEVELOPER',
-  ) {
-    this.logger.log(`Request for all Users\t${ip}`, UsersController.name);
+  findUsers(@Query('role') role?: Role) {
     return this.userService.findUsers(role);
   }
 
-  @Throttle({ short: { ttl: 1000, limit: 1 } })
   @Get(':id')
-  findUser(@Param('id', ParseIntPipe) id: number) {
+  findUser(@Param('id') id: string) {
     return this.userService.findUser(id);
   }
 
   @Post()
-  create(@Body(ValidationPipe) user: Prisma.UserCreateInput) {
+  create(@Body(ValidationPipe) user: User) {
     return this.userService.create(user);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(ValidationPipe) userUpdate: Prisma.UserUpdateInput,
+    @Param('id') id: string,
+    @Body(ValidationPipe) updatedUser: Partial<User>,
   ) {
-    return this.userService.update(id, userUpdate);
+    return this.userService.update(id, updatedUser);
   }
 
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
+  delete(@Param('id') id: string) {
     return this.userService.delete(id);
   }
 }
