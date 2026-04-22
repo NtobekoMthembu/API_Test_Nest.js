@@ -7,7 +7,7 @@ export class SessionsService {
   private collection = 'sessions';
 
   constructor(private readonly firebaseService: FirebaseService) {}
-
+  // session created everytime a user login
   async createSession(data: Partial<Session>): Promise<Session> {
     const session: Session = {
       userId: data.userId!,
@@ -25,7 +25,7 @@ export class SessionsService {
 
     return { id: ref.id, ...session };
   }
-
+ // end session after user logged ou and calculate the time user spent 
   async endSession(sessionId: string): Promise<Session> {
     const ref = this.firebaseService.db
       .collection(this.collection)
@@ -45,7 +45,7 @@ export class SessionsService {
 
     return { id: sessionId, ...data, logoutTime, duration, isActive: false };
   }
-
+ // find all active users
   async findActiveSessions(): Promise<Session[]> {
     const snapshot = await this.firebaseService.db
       .collection(this.collection)
@@ -57,7 +57,7 @@ export class SessionsService {
       ...doc.data(),
     })) as Session[];
   }
-
+ // find all sessions history and order by login time
   async findAllSessions(): Promise<Session[]> {
     const snapshot = await this.firebaseService.db
       .collection(this.collection)
@@ -69,20 +69,25 @@ export class SessionsService {
       ...doc.data(),
     })) as Session[];
   }
-
+ // find session(s) belong to specific user
   async findUserSessions(userId: string): Promise<Session[]> {
-    const snapshot = await this.firebaseService.db
-      .collection(this.collection)
-      .where('userId', '==', userId)
-      .orderBy('loginTime', 'desc')
-      .get();
+  const snapshot = await this.firebaseService.db
+    .collection(this.collection)
+    .where('userId', '==', userId)
+    .get(); // ← removed .orderBy('loginTime', 'desc')
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Session[];
-  }
+  const sessions = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Session[];
 
+  // Sort in JavaScript instead of Firestore
+  return sessions.sort(
+    (a, b) =>
+      new Date(b.loginTime).getTime() - new Date(a.loginTime).getTime(),
+  );
+}
+ // calcutate duration user spent logged in hour:minutes
   private calculateDuration(loginTime: string, logoutTime: string): string {
     const login = new Date(loginTime).getTime();
     const logout = new Date(logoutTime).getTime();
